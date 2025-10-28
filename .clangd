@@ -1,0 +1,10 @@
+CompileFlags:
+  Add:
+    - -I/opt/homebrew/include
+    - -std=c++17
+    - -DGL_SILENCE_DEPRECATION
+    - -F/System/Library/Frameworks
+    - -F/opt/homebrew/Frameworks
+  Remove:
+    - -W*
+    - -w
