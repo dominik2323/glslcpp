@@ -25,31 +25,35 @@ vec2 rm(in vec2 uv, in vec4 b) {
 
 float b(in float n) {
     float t = sin(u_time) * 0.5 + 0.5;
-    return (sin(n * 4.0) * 0.5 + 0.5) * t;
+    return (sin(n * 4.0) * 0.5 + 0.5);
+}
+
+float n(in float res, in float t) {
+    vec2 r = u_resolution;
+    vec4 FC = gl_FragCoord;
+    vec2 p = (FC.xy * 2.0 - r) / r.y;
+    float l = 2.0 - length(res - 1.0);
+    return max(l,-l*1e1) / exp(mod(dot(FC,sin(FC.yxyx))+t,2.)+sin(t+sin(t/.6+p.y)));
 }
 
 void main() {
     float t = sin(u_time) * 0.5 + 0.5;
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    vec4 FC = gl_FragCoord;
-    vec2 r = u_resolution;
+    float px = 1 / u_resolution.x;
 
-    vec2 ruv1 = rm(uv, vec4(0.0, 0.5, 0.0, 1.0));
-    float t1 = tri(ruv1, b(uv.x));
+    float blur = b(1.0 - abs((uv.y - 0.5) * 2.0));
+    blur *= 0.2;
+    float samples = 6.0;
 
-    vec2 ruv2 = rm(uv, vec4(0.5, 0.7, 0.75, 0.25));
-    float t2 = tri(ruv2, b(uv.x));
+    vec2 ruv1 = rm(uv, vec4(0.0, 1.0, 0.0, 1.0));
+    ruv1.x = floor(ruv1.x * samples) / samples;
+    float t1 = tri(ruv1, blur);
 
-    vec2 ruv3 = rm(uv, vec4(0.7, 1.0, 0.9, 0.1));
-    float t3 = tri(ruv3, b(uv.x));
+    float bg = 1.0 - (floor(abs((uv.y - 0.5) * 2.0) * 30.0) / 30.0);
 
-    float res = t1 + t2 + t3;
-    res *= uv.x + 0.2;
+    float res = t1 + bg;
+    float o = n(res, t);
+    // o *= 0.1;
 
-    vec2 p = (FC.xy * 2.0 - r) / r.y;
-    float l = 2.0 - length(res - 1.0);
-    float o = max(l,-l*1e1) / exp(mod(dot(FC,sin(FC.yxyx))+u_time,2.)+sin(t+sin(t/.6+p.y)));
-    o *= 0.1;
-
-    out_color = vec4(res * vec3(1.0, 0.4, 2.2) / o, 1.0);
+    out_color = vec4(vec3(res), 1.0);
 }
