@@ -33,27 +33,62 @@ float n(in float res, in float t) {
     vec4 FC = gl_FragCoord;
     vec2 p = (FC.xy * 2.0 - r) / r.y;
     float l = 2.0 - length(res - 1.0);
-    return max(l,-l*1e1) / exp(mod(dot(FC,sin(FC.yxyx))+t,2.)+sin(t+sin(t/.6+p.y)));
+    return max(l,-l*1e1) / exp(mod(dot(FC,sin(FC.yxyx))+t,2.));
+    //+sin(t+sin(t/.6+p.y)));
+}
+
+float st(in float s, in float n) {
+    return floor(s * n) / n;
+}
+
+float g_map(in float d) {
+    float m = step(0.001, d);
+    return sin(d * pi);
+}
+
+float range(in float x, in vec2 i) {
+    return step(i.x, x) * (1.0 - step(i.y, x));
+}
+
+float rmap(in float x, in vec2 b) {
+    return ((x - b.x) / abs(b.x - b.y));
+}
+
+const int l = 8;
+
+float[l] ints = float[](0.0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 1.0);
+vec3[l] pal = vec3[](
+    vec3(0, 1, 1),
+    vec3(1, 1, 1),
+    vec3(0, 0, 0),
+    vec3(1, 1, 0),
+    vec3(1, 1, 0),
+    vec3(0.0, 0.8, 0.50),
+    vec3(0.5),
+    vec3(1, 1, 1)
+);
+
+vec3 fill(in float x) {
+    vec3 c = vec3(0.0); 
+    for (int i = 0; i < l-1; i++) {
+        float even = 1.0 - mod(float(i), 2.0);
+        vec2 b = vec2(ints[i], ints[i+1]);
+        float m = range(x - 0.001, b);
+        c += mix(pal[i], pal[i + 1], rmap(x, b)) * m;
+    }
+    return c;
 }
 
 void main() {
     float t = sin(u_time) * 0.5 + 0.5;
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    float px = 1 / u_resolution.x;
-
-    float blur = b(1.0 - abs((uv.y - 0.5) * 2.0));
-    blur *= 0.2;
-    float samples = 6.0;
+    float px = 1.0 / u_resolution.x;
 
     vec2 ruv1 = rm(uv, vec4(0.0, 1.0, 0.0, 1.0));
-    ruv1.x = floor(ruv1.x * samples) / samples;
-    float t1 = tri(ruv1, blur);
+    // ruv1.x = st(ruv1.x, 10.0);
+    float t1 = tri(ruv1, 0.2);
+    // t1 = ruv1.x;
+    float m = step(0.001, t1);
 
-    float bg = 1.0 - (floor(abs((uv.y - 0.5) * 2.0) * 30.0) / 30.0);
-
-    float res = t1 + bg;
-    float o = n(res, t);
-    // o *= 0.1;
-
-    out_color = vec4(vec3(res), 1.0);
+    out_color = vec4(fill(t1) * m, 1.0);
 }
